@@ -12,13 +12,7 @@ class ScrapeController extends Controller
     {
         $query = Scrape::query();
 
-        if ($request->has('threat_level')) {
-            $query->where('threat_level', $request->threat_level);
-        }
-
-        if ($request->has('competitor')) {
-            $query->where('competitor_name', 'LIKE', '%' . $request->competitor . '%');
-        }
+        $this->applyFilters($query, $request);
 
         $scrapes = $query->orderBy('timestamp', 'desc')->paginate($request->get('per_page', 15));
 
@@ -34,17 +28,43 @@ class ScrapeController extends Controller
 
     public function renderReportView(Request $request)
     {
-        $scrapes = Scrape::query()
-            ->when($request->threat_level, function ($query, $level) {
-                $query->where('threat_level', $level);
-            })
-            ->when($request->competitor, function ($query, $competitor) {
-                $query->where('competitor_name', 'LIKE', '%' . $competitor . '%');
-            })
-            ->orderBy('timestamp', 'desc')
+        $query = Scrape::query();
+        $this->applyFilters($query, $request);
+
+        $totalReports = (clone $query)->count();
+        $recentReports = (clone $query)->where('timestamp', '>=', now()->subDays(7))->count();
+        $competitorCount = (clone $query)
+            ->whereNotNull('competitor_name')
+            ->distinct()
+            ->count('competitor_name');
+        $threatCounts = (clone $query)
+            ->selectRaw('LOWER(TRIM(threat_level)) as level, COUNT(*) as total')
+            ->groupByRaw('LOWER(TRIM(threat_level))')
+            ->pluck('total', 'level');
+
+        $scrapes = $query->orderBy('timestamp', 'desc')
             ->paginate(15)
             ->withQueryString();
 
-        return view('scrape-report', compact('scrapes'));
+        return view('scrape-report', compact(
+            'scrapes',
+            'totalReports',
+            'recentReports',
+            'competitorCount',
+            'threatCounts'
+        ));
+    }
+
+    private function applyFilters($query, Request $request): void
+    {
+        if ($request->filled('threat_level')) {
+            $level = strtolower(trim((string) $request->input('threat_level')));
+
+            $query->whereRaw('LOWER(TRIM(threat_level)) = ?', [$level]);
+        }
+
+        if ($request->filled('competitor')) {
+            $query->where('competitor_name', 'LIKE', '%' . trim($request->input('competitor')) . '%');
+        }
     }
 }

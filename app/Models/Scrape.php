@@ -10,7 +10,7 @@ class Scrape extends Model
     use HasFactory;
 
     // Explicitly target your custom table name
-    protected $table = 'ai_competitor_intelligence';
+    protected $table = 'n8n_ai_competitor_monitoring';
 
     // Primary key configuration (UUID char(36))
     protected $primaryKey = 'id';
