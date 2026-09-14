@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Scrape;
 use App\Http\Resources\ScrapeResource;
+use App\Models\Scrape;
 use Illuminate\Http\Request;
 
 class ScrapeController extends Controller
@@ -64,7 +64,11 @@ class ScrapeController extends Controller
         }
 
         if ($request->filled('competitor')) {
-            $query->where('competitor_name', 'LIKE', '%' . trim($request->input('competitor')) . '%');
+            $query->where('competitor_name', 'LIKE', '%'.trim($request->input('competitor')).'%');
+        }
+
+        if ($request->filled('country')) {
+            $query->whereRaw('LOWER(TRIM(country)) = ?', [strtolower(trim((string) $request->input('country')))]);
         }
     }
 }

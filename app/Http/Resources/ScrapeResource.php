@@ -12,9 +12,10 @@ class ScrapeResource extends JsonResource
         return [
             'id' => $this->id,
             'competitor_name' => $this->competitor_name,
+            'country' => $this->country,
             'post_type' => $this->post_type,
             'threat_level' => $this->threat_level,
-            'original_khmer_text' => $this->original_khmer_text,
+            'original_text' => $this->original_text,
             'english_summary' => $this->english_summary,
             'ai_counter_strategy_draft' => $this->ai_counter_strategy_draft,
             'source_url' => $this->source_url,

@@ -14,7 +14,9 @@ class Scrape extends Model
 
     // Primary key configuration (UUID char(36))
     protected $primaryKey = 'id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     // Disable default Laravel created_at/updated_at handling
@@ -25,9 +27,10 @@ class Scrape extends Model
         'id',
         'timestamp',
         'competitor_name',
+        'country',
         'post_type',
         'threat_level',
-        'original_khmer_text',
+        'original_text',
         'english_summary',
         'ai_counter_strategy_draft',
         'source_url',
