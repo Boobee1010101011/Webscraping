@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'n8n' => [
+        'scan_webhook' => env('N8N_SCAN_WEBHOOK', 'http://localhost:5678/webhook/0fe81322-22db-4ff1-93b0-a2899285e039'),
+    ],
+
 ];

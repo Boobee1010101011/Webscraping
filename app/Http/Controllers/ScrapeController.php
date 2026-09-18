@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\ScrapeResource;
 use App\Models\Scrape;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ScrapeController extends Controller
@@ -57,6 +58,8 @@ class ScrapeController extends Controller
 
     private function applyFilters($query, Request $request): void
     {
+        $this->applyDateFilters($query, $request);
+
         if ($request->filled('threat_level')) {
             $level = strtolower(trim((string) $request->input('threat_level')));
 
@@ -70,5 +73,29 @@ class ScrapeController extends Controller
         if ($request->filled('country')) {
             $query->whereRaw('LOWER(TRIM(country)) = ?', [strtolower(trim((string) $request->input('country')))]);
         }
+    }
+
+    private function applyDateFilters($query, Request $request): void
+    {
+        // created_at is the time the report was inserted into the database.
+        if ($request->filled('date')) {
+            $date = Carbon::createFromFormat('!Y-m-d', (string) $request->input('date'));
+
+            if ($date && $date->format('Y-m-d') === $request->input('date')) {
+                $query->whereBetween('created_at', [
+                    $date->copy()->startOfDay(),
+                    $date->copy()->endOfDay(),
+                ]);
+            }
+
+            return;
+        }
+
+        match ($request->input('date_range')) {
+            '1h' => $query->where('created_at', '>=', now()->subHour()),
+            '1d' => $query->where('created_at', '>=', now()->subDay()),
+            '1w' => $query->where('created_at', '>=', now()->subWeek()),
+            default => null,
+        };
     }
 }

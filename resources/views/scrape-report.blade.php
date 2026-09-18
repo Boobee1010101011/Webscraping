@@ -28,7 +28,8 @@
             --muted: #737a76;
             --line: #e4e6df;
             --paper: #fbfaf6;
-            --lime: #d7f34a;
+            --lime: #4da398;
+            --accent-ink: #102321;
             --coral: #ff6b61;
             --amber: #f6bd4b;
             --mint: #86ddb0
@@ -101,7 +102,7 @@
             display: grid;
             place-items: center;
             background: var(--lime);
-            color: var(--ink);
+            color: var(--accent-ink);
             font-size: 17px;
             font-weight: 900;
             line-height: 1
@@ -193,7 +194,7 @@
             gap: 9px;
             border: 0;
             background: var(--lime);
-            color: var(--ink);
+            color: var(--accent-ink);
             font-size: 13px;
             font-weight: 850
         }
@@ -248,6 +249,53 @@
 
         html.dark tbody tr:hover {
             background: #293229
+        }
+
+        html.dark .nav a {
+            color: #b8c3bd
+        }
+
+        html.dark .metric-icon,
+        html.dark .metric-label,
+        html.dark .section-link,
+        html.dark .legend-row,
+        html.dark td,
+        html.dark .action-button,
+        html.dark .detail-close {
+            color: #c5d0ca
+        }
+
+        html.dark .metric-change,
+        html.dark .live {
+            color: #74d0a5
+        }
+
+        html.dark .signal-title {
+            color: #edf4ef
+        }
+
+        html.dark .signal-time,
+        html.dark th,
+        html.dark .detail-section h3 {
+            color: #aebbb3
+        }
+
+        html.dark .detail-text {
+            color: #d6e0da
+        }
+
+        html.dark .detail-link {
+            color: #74d0c1
+        }
+
+        html.dark .result-count {
+            background: #2b3935;
+            color: #c5d0ca
+        }
+
+        html.dark .pagination a,
+        html.dark .pagination span {
+            color: #c5d0ca
         }
 
         main {
@@ -670,6 +718,23 @@
             font-weight: 850
         }
 
+        .alerted-time {
+            display: grid;
+            gap: 3px;
+            white-space: nowrap
+        }
+
+        .alerted-time strong {
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 800
+        }
+
+        .alerted-time small {
+            color: var(--muted);
+            font-size: 11px
+        }
+
         .summary {
             display: -webkit-box;
             max-width: 265px;
@@ -1050,10 +1115,12 @@
                         <circle cx="11" cy="11" r="6.5" />
                         <path d="m16 16 5 5" />
                     </svg></button><button class="theme-toggle" type="button" aria-label="Switch to dark mode"><span
-                    class="theme-icon"></span></button><button class="scan-button" type="button"><svg viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
+                        class="theme-icon"></span></button><button id="newScanBtn" class="scan-button" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14" />
-                    </svg>New scan</button><span class="avatar">PI</span></div>
+                    </svg>
+                    <span>New scan</span>
+                </button><span class="avatar">PI</span></div>
         </header>
         <main>
             <div class="page-heading">
@@ -1165,11 +1232,17 @@
                                 {{ $selectedCountry === strtolower($country) ? 'selected' : '' }}>{{ $country }}
                             </option>
                         @endforeach
+                    </select><select name="date_range" onchange="this.form.elements.date.value = ''; this.form.submit()">
+                        <option value="">Any insertion time</option>
+                        <option value="1h" {{ request('date_range') === '1h' ? 'selected' : '' }}>Inserted in the last hour</option>
+                        <option value="1d" {{ request('date_range') === '1d' ? 'selected' : '' }}>Inserted in the last 24 hours</option>
+                        <option value="1w" {{ request('date_range') === '1w' ? 'selected' : '' }}>Inserted in the last 7 days</option>
                     </select>
+                    <input type="date" name="date" aria-label="Inserted on specific date" onchange="this.form.elements.date_range.value = ''; this.form.submit()" value="{{ request('date') }}">
                     <input type="text" name="competitor" placeholder="Search competitor..."
                         value="{{ request('competitor') }}"><button class="scan-button filter-button"
                         type="submit">Apply filters</button>
-                    @if (request('threat_level') || request('country') || request('competitor'))
+                    @if (request('threat_level') || request('country') || request('competitor') || request('date_range') || request('date'))
                         <a class="clear-link" href="{{ route('scrape-report') }}">Clear filters</a>
                     @endif
                 </form>
@@ -1182,6 +1255,7 @@
                                 <th>Summary</th>
                                 <th>AI Counter Strategy</th>
                                 <th>Posted at</th>
+                                <th>Alerted at</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -1202,6 +1276,16 @@
                                     <td style="white-space:nowrap">
                                         {{ $scrape->timestamp ? $scrape->timestamp->timezone('Asia/Phnom_Penh')->format('M d, Y · h:i A') : 'N/A' }}
                                     </td>
+                                    <td>
+                                        @if ($scrape->created_at)
+                                            <span class="alerted-time" title="Inserted {{ $scrape->created_at->timezone('Asia/Phnom_Penh')->format('M d, Y h:i A') }}">
+                                                <strong>{{ $scrape->created_at->timezone('Asia/Phnom_Penh')->format('M d, Y h:i A') }}</strong>
+                                                <small>{{ $scrape->created_at->diffForHumans() }}</small>
+                                            </span>
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
                                     <td><button type="button" class="action-button view-report"
                                             data-competitor="{{ $scrape->competitor_name }}"
                                             data-country="{{ $scrape->country }}"
@@ -1217,7 +1301,7 @@
                                                 <path d="M5 12h13M13 6l6 6-6 6" />
                                             </svg></button></td>
                             </tr>@empty<tr>
-                                    <td colspan="6" style="padding:45px;text-align:center;color:var(--muted)">No
+                                    <td colspan="7" style="padding:45px;text-align:center;color:var(--muted)">No
                                         intelligence reports found.</td>
                                 </tr>
                             @endforelse
@@ -1364,6 +1448,32 @@
             if (e.key === 'Escape') {
                 if (!lightbox.hidden) closeLightbox();
                 else if (!panel.hidden) closeDetails()
+            }
+        });
+
+        document.querySelector('.scan-button').addEventListener('click', async function() {
+            this.disabled = true;
+
+            try {
+                const response = await fetch('{{ route('scan.trigger') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const payload = await response.json().catch(() => ({}));
+                    throw new Error(payload.message || 'The scan could not be started.');
+                }
+
+                alert('Scan initiated!');
+            } catch (error) {
+                console.error('Error triggering scan:', error);
+                alert(error.message || 'Unable to start the scan. Please try again.');
+            } finally {
+                this.disabled = false;
             }
         });
     </script>
