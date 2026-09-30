@@ -1,13 +1,25 @@
 <?php
 
-use App\Http\Controllers\ScrapeController;
+use App\Http\Controllers\BankMonitoringController;
+use App\Http\Controllers\FacebookMonitoringController;
+use App\Http\Controllers\TiktokMonitoringController;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('scrapes')->name('scrapes.')->group(function () {
-    Route::get('/', [ScrapeController::class, 'index'])->name('index'); // Resolves to 'scrapes.index'
-    Route::get('/{id}', [ScrapeController::class, 'show'])->name('show');   // Resolves to 'scrapes.show'
+Route::prefix('facebook-monitoring')->name('facebook-monitoring.')->group(function () {
+    Route::get('/', [FacebookMonitoringController::class, 'index'])->name('index');
+    Route::get('/{id}', [FacebookMonitoringController::class, 'show'])->name('show');
+});
+
+Route::prefix('tiktok-monitoring')->name('tiktok-monitoring.')->group(function () {
+    Route::get('/', [TiktokMonitoringController::class, 'index'])->name('index');
+    Route::get('/{id}', [TiktokMonitoringController::class, 'show'])->name('show');
+});
+
+Route::prefix('bank-monitoring')->name('bank-monitoring.')->group(function () {
+    Route::get('/', [BankMonitoringController::class, 'index'])->name('index');
+    Route::get('/{id}', [BankMonitoringController::class, 'show'])->name('show');
 });
 
 Route::post('/trigger-scan', function () {

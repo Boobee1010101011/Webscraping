@@ -37,3 +37,36 @@
     width: 16px;
     height: 16px;
 }
+
+[data-dashboard-content],
+main {
+    transition: opacity .16s ease, transform .16s ease;
+}
+
+[data-dashboard-content].is-loading,
+main.is-loading {
+    opacity: .45;
+    transform: translateY(3px);
+    pointer-events: none;
+}
+
+.future-content {
+    display: grid;
+    min-height: 420px;
+    place-items: center;
+    text-align: center;
+}
+
+.future-content .card {
+    max-width: 520px;
+    padding: 40px;
+    border: 1px solid var(--line, #e4e6df);
+    background: var(--surface, #fffefa);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-dashboard-content],
+    main {
+        transition: none;
+    }
+}

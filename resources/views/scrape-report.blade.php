@@ -1108,8 +1108,10 @@
     <div class="app">
         <header class="topbar">
             <div class="brand"><span class="brand-mark">↗</span><span class="brand-name">PULSE / INTEL</span></div>
-            <nav class="nav" aria-label="Primary"><a class="active" href="{{ route('scrape-report') }}">Overview</a><a
-                    href="#reports">Reports</a><a href="#signals">Watchlist</a></nav>
+            <nav class="nav" aria-label="Primary"><a class="{{ $platform === 'facebook' ? 'active' : '' }}"
+                    href="{{ route('scrape-report') }}">Facebook</a><a class="{{ $platform === 'tiktok' ? 'active' : '' }}"
+                    href="{{ route('tiktok-report') }}">TikTok</a><a href="{{ route('bank-monitoring') }}">Bank</a><a
+                    href="{{ route('generated-content') }}">Generated content</a></nav>
             <div class="top-actions"><button class="icon-button" type="button" aria-label="Search"><svg
                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <circle cx="11" cy="11" r="6.5" />
@@ -1214,11 +1216,11 @@
             <section class="reports" id="reports">
                 <div class="reports-head">
                     <div class="reports-title">
-                        <h2>Intelligence reports</h2><span class="result-count">{{ number_format($totalReports) }}
+                        <h2>{{ $platform === 'tiktok' ? 'TikTok monitoring' : 'Facebook monitoring' }}</h2><span class="result-count">{{ number_format($totalReports) }}
                             results</span>
                     </div>
                 </div>
-                <form method="GET" action="{{ route('scrape-report') }}" class="filters"><select
+                <form method="GET" action="{{ $filterAction }}" class="filters"><select
                         name="threat_level" onchange="this.form.submit()">
                         <option value="">All threat levels</option>
                         <option value="High" {{ $selectedThreat === 'high' ? 'selected' : '' }}>High</option>
@@ -1239,11 +1241,19 @@
                         <option value="1w" {{ request('date_range') === '1w' ? 'selected' : '' }}>Inserted in the last 7 days</option>
                     </select>
                     <input type="date" name="date" aria-label="Inserted on specific date" onchange="this.form.elements.date_range.value = ''; this.form.submit()" value="{{ request('date') }}">
+                    @if ($platform === 'tiktok')
+                        <select name="post_type" onchange="this.form.submit()">
+                            <option value="">All post types</option>
+                            @foreach (['Video', 'Live', 'Photo', 'Story'] as $postType)
+                                <option value="{{ $postType }}" {{ strtolower((string) request('post_type')) === strtolower($postType) ? 'selected' : '' }}>{{ $postType }}</option>
+                            @endforeach
+                        </select>
+                    @endif
                     <input type="text" name="competitor" placeholder="Search competitor..."
                         value="{{ request('competitor') }}"><button class="scan-button filter-button"
                         type="submit">Apply filters</button>
-                    @if (request('threat_level') || request('country') || request('competitor') || request('date_range') || request('date'))
-                        <a class="clear-link" href="{{ route('scrape-report') }}">Clear filters</a>
+                    @if (request('threat_level') || request('country') || request('competitor') || request('post_type') || request('date_range') || request('date'))
+                        <a class="clear-link" href="{{ $filterAction }}">Clear filters</a>
                     @endif
                 </form>
                 <div class="table-wrap">
@@ -1291,7 +1301,7 @@
                                             data-country="{{ $scrape->country }}"
                                             data-post-type="{{ $scrape->post_type }}"
                                             data-threat="{{ $scrape->threat_level }}"
-                                            data-original-text="{{ $scrape->original_text }}"
+                                            data-original-text="{{ $scrape->original_text ?? $scrape->caption ?? $scrape->transcript }}"
                                             data-summary="{{ $scrape->english_summary }}"
                                             data-strategy="{{ $scrape->ai_counter_strategy_draft }}"
                                             data-source-url="{{ $scrape->source_url }}"
@@ -1424,8 +1434,10 @@
             zoom = Math.min(4, Math.max(.25, zoom + amount));
             updateZoom()
         }
-        document.querySelectorAll('.view-report').forEach(button => button.addEventListener('click', () => openDetails(
-            button)));
+        document.addEventListener('click', event => {
+            const button = event.target.closest('.view-report');
+            if (button) openDetails(button);
+        });
         document.querySelector('.detail-close').onclick = closeDetails;
         backdrop.onclick = closeDetails;
         document.getElementById('lightbox-close').onclick = closeLightbox;
