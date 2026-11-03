@@ -8,7 +8,7 @@ it('triggers a scan through the n8n webhook', function () {
         '*' => Http::response(['queued' => true], 200),
     ]);
 
-    $response = $this->postJson('/api/trigger-scan');
+    $response = $this->postJson('/api/trigger-scan', [], jwtHeaders());
 
     $response->assertOk()->assertJson(['success' => true]);
 
@@ -24,7 +24,7 @@ it('returns an error when the scan webhook fails', function () {
         '*' => Http::response([], 500),
     ]);
 
-    $response = $this->postJson('/api/trigger-scan');
+    $response = $this->postJson('/api/trigger-scan', [], jwtHeaders());
 
     $response->assertStatus(502)->assertJson(['success' => false]);
 });
@@ -34,7 +34,7 @@ it('returns a useful error when n8n is unreachable', function () {
         throw new ConnectionException('Connection refused');
     });
 
-    $response = $this->postJson('/api/trigger-scan');
+    $response = $this->postJson('/api/trigger-scan', [], jwtHeaders());
 
     $response->assertStatus(503)->assertJson([
         'success' => false,

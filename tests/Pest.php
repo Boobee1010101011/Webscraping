@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Services\JwtService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +49,16 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/** Authorization header for a signed-in dashboard user (creates one when none is given). */
+function jwtHeaders(?User $user = null): array
+{
+    $user ??= User::create([
+        'name' => 'Test User',
+        'email' => 'user'.uniqid().'@example.com',
+        'password' => 'password123',
+    ]);
+
+    return ['Authorization' => 'Bearer '.app(JwtService::class)->issue($user)];
 }

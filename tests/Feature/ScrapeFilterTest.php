@@ -10,7 +10,7 @@ it('filters reports by database insertion date', function () {
     FacebookMonitoring::create(['id' => 'old', 'created_at' => '2026-09-15 10:00:00']);
     FacebookMonitoring::create(['id' => 'matching', 'created_at' => '2026-09-16 14:00:00']);
 
-    $response = $this->get('/api/facebook-monitoring?date=2026-09-16');
+    $response = $this->getJson('/api/facebook-monitoring?date=2026-09-16', jwtHeaders());
 
     $response->assertOk()
         ->assertJsonCount(1, 'data')
@@ -23,7 +23,7 @@ it('filters reports inserted within a relative time range', function () {
     FacebookMonitoring::create(['id' => 'recent', 'created_at' => '2026-09-18 11:30:00']);
     FacebookMonitoring::create(['id' => 'old', 'created_at' => '2026-09-18 10:00:00']);
 
-    $response = $this->get('/api/facebook-monitoring?date_range=1h');
+    $response = $this->getJson('/api/facebook-monitoring?date_range=1h', jwtHeaders());
 
     $response->assertOk()
         ->assertJsonCount(1, 'data')

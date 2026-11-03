@@ -1122,7 +1122,7 @@
                         <path d="M12 5v14M5 12h14" />
                     </svg>
                     <span>New scan</span>
-                </button><span class="avatar">PI</span></div>
+                </button>@include('partials.account-menu')</div>
         </header>
         <main>
             <div class="page-heading">

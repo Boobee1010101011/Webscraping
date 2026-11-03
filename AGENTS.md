@@ -17,6 +17,14 @@ This is a Laravel 12 application. Application code lives in `app/`, routes in `r
 
 Use four spaces, UTF-8, LF line endings, and a final newline, as defined in `.editorconfig`. Follow Laravel/PHP conventions: `PascalCase` classes, `camelCase` methods and variables, and descriptive migration names. Keep controllers thin; put validation in form requests. Use kebab-case Blade component filenames and clear route names. Run Pint after PHP changes.
 
+## Authentication
+
+- Login is JWT (HS256, `firebase/php-jwt`). `POST /api/auth/login` returns a token and also sets an HttpOnly `ppi_token` cookie (SameSite=Lax) for the Blade pages; API clients may send `Authorization: Bearer` instead. Tokens live `JWT_TTL_MINUTES` (default 60), are stateless, and sign-out only clears the cookie.
+- Every dashboard page and `/api/*` route except login sits behind the `auth.jwt` middleware (`app/Http/Middleware/AuthenticateJwt.php`). Guests get a redirect to `/login` on pages and a 401 JSON on the API. New routes belong inside that group.
+- The login page has a sign-up form (`POST /api/auth/register`) controlled by `REGISTRATION_ENABLED` (on by default only when `APP_ENV=local`; turn it off when deploying, since anyone who can reach the page could otherwise create an account). Accounts can also be created with `php artisan user:create <email> --name="Name"` (asks for the password; it writes to the database).
+- Face ID is optional and talks to the separate Face ID server through `app/Services/FaceIdService.php` (`FACE_API_URL`, `FACE_CLIENT_URL`, `FACE_API_KEY`); users are matched by email. The key stays server-side. The scan pages open in a popup (`resources/views/partials/face-frame.blade.php`). The Face ID server must list this app's origin in its `INTEGRATION_REDIRECTS`, and this app must not run on port 8000, which the Face ID server uses (try `php artisan serve --port=8001`).
+- Feature tests sign in with the `jwtHeaders()` helper in `tests/Pest.php`.
+
 ## Testing Guidelines
 
 Add feature tests for routes, authentication, and end-to-end behavior; use unit tests for isolated logic. Name tests descriptively, for example `it_allows_a_user_to_update_their_profile`. Keep tests deterministic and compatible with in-memory SQLite. Run the relevant test file during development, then `composer test` before submitting.
