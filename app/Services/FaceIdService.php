@@ -12,7 +12,7 @@ use RuntimeException;
 
 /**
  * Talks to the Face ID server (server-to-server). The API key never reaches the browser.
- * Users are matched to face accounts by email.
+ * Users are matched to face accounts by their user ID (the primary key), which never changes, unlike an email.
  */
 class FaceIdService
 {
@@ -30,7 +30,7 @@ class FaceIdService
     public function hasFace(User $user): bool
     {
         $response = $this->call(fn (PendingRequest $http) => $http->get('/api/integration/users/status', [
-            'email' => mb_strtolower($user->email),
+            'user_id' => (string) $user->getKey(),
         ]));
 
         return (bool) $response->json('has_face');
@@ -40,7 +40,7 @@ class FaceIdService
     public function setupUrl(User $user): string
     {
         $response = $this->call(fn (PendingRequest $http) => $http->post('/api/integration/enroll-tokens', [
-            'email' => mb_strtolower($user->email),
+            'user_id' => (string) $user->getKey(),
             'name' => $user->name,
         ]));
 
@@ -53,8 +53,16 @@ class FaceIdService
         return $url;
     }
 
-    /** Trades the one-time code from a face scan for the person's email; null when it is invalid or expired. */
-    public function emailForLoginCode(string $code): ?string
+    /** Removes this user's stored face (call when their account is deleted). */
+    public function forget(User $user): void
+    {
+        $this->call(fn (PendingRequest $http) => $http->delete('/api/integration/users', [
+            'user_id' => (string) $user->getKey(),
+        ]));
+    }
+
+    /** Trades the one-time code from a face scan for the user's ID; null when it is invalid or expired. */
+    public function userIdForLoginCode(string $code): ?string
     {
         try {
             $response = $this->call(fn (PendingRequest $http) => $http->post('/api/integration/login-codes/exchange', [
@@ -64,9 +72,9 @@ class FaceIdService
             return null;
         }
 
-        $email = $response->json('email');
+        $userId = $response->json('user_id');
 
-        return is_string($email) && $email !== '' ? $email : null;
+        return is_string($userId) && $userId !== '' ? $userId : null;
     }
 
     /**

@@ -36,15 +36,16 @@ it('hides Face ID when the Face ID server is unreachable', function () {
 
 it('tells the signed-in user whether they have a face registered', function () {
     enableFaceId();
+    $user = faceUser();
     Http::fake(['face.test/*' => Http::response(['exists' => true, 'has_face' => false])]);
 
-    $this->getJson('/api/face/status', jwtHeaders(faceUser()))
+    $this->getJson('/api/face/status', jwtHeaders($user))
         ->assertOk()
         ->assertExactJson(['enabled' => true, 'has_face' => false]);
 
     Http::assertSent(fn ($request) => $request->hasHeader('X-API-Key', 'secret-key')
         && str_contains($request->url(), '/api/integration/users/status')
-        && str_contains($request->url(), 'email=jane%40example.com'));
+        && str_contains($request->url(), 'user_id='.$user->getKey()));
 });
 
 it('requires a signed-in user for face status and setup', function () {
@@ -54,14 +55,15 @@ it('requires a signed-in user for face status and setup', function () {
 
 it('returns the face setup link for the signed-in user', function () {
     enableFaceId();
+    $user = faceUser();
     Http::fake(['face.test/*' => Http::response(['token' => 't', 'url' => 'http://localhost:3000/enroll?token=t'])]);
 
-    $this->postJson('/api/face/setup', [], jwtHeaders(faceUser()))
+    $this->postJson('/api/face/setup', [], jwtHeaders($user))
         ->assertOk()
         ->assertJsonPath('url', 'http://localhost:3000/enroll?token=t');
 
     Http::assertSent(fn ($request) => $request->hasHeader('X-API-Key', 'secret-key')
-        && $request['email'] === 'jane@example.com'
+        && $request['user_id'] === (string) $user->getKey()
         && $request['name'] === 'Jane Doe');
 });
 
@@ -74,8 +76,8 @@ it('answers 502 when the setup link cannot be fetched', function () {
 
 it('signs in with a face login code', function () {
     enableFaceId();
-    faceUser();
-    Http::fake(['face.test/*' => Http::response(['email' => 'Jane@Example.com', 'name' => 'Jane Doe'])]);
+    $user = faceUser();
+    Http::fake(['face.test/*' => Http::response(['user_id' => (string) $user->getKey(), 'name' => 'Jane Doe'])]);
 
     $response = $this->postJson('/api/auth/face', ['code' => str_repeat('a', 32)]);
 
@@ -99,9 +101,9 @@ it('refuses a face login code the Face ID server rejects', function () {
     $this->postJson('/api/auth/face', ['code' => str_repeat('a', 32)])->assertStatus(401);
 });
 
-it('refuses a face login when no dashboard account has that email', function () {
+it('refuses a face login when no dashboard account has that ID', function () {
     enableFaceId();
-    Http::fake(['face.test/*' => Http::response(['email' => 'stranger@example.com'])]);
+    Http::fake(['face.test/*' => Http::response(['user_id' => '999999'])]);
 
     $this->postJson('/api/auth/face', ['code' => str_repeat('a', 32)])
         ->assertStatus(401)

@@ -21,6 +21,18 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Face ID (optional)
+
+Sign-in with a face scan is provided by the separate Face ID service (`face` repo: `deepface/` API and `client/` camera screens). This app keeps the users and matches them by user ID (`users.id`), never by email. Set these in `.env`:
+
+```
+FACE_API_URL=http://localhost:8001
+FACE_CLIENT_URL=http://localhost:3000
+FACE_API_KEY=<same value as INTEGRATION_API_KEY on the Face ID server>
+```
+
+The Face ID server must list this app's origin in its `INTEGRATION_REDIRECTS`. Run this app on a port other than 8001 (the default `php artisan serve` port 8000 is fine). See `app/Services/FaceIdService.php` and the Face ID repo's `deepface/INTEGRATION.md`.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.

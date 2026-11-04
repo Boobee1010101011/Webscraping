@@ -45,16 +45,16 @@ class FaceController extends Controller
     public function login(FaceLoginRequest $request): JsonResponse
     {
         try {
-            $email = $this->face->emailForLoginCode($request->input('code'));
+            $userId = $this->face->userIdForLoginCode($request->input('code'));
         } catch (RuntimeException) {
             return response()->json(['message' => 'Face ID is not available right now.'], 502);
         }
 
-        if (! $email) {
+        if (! $userId) {
             return response()->json(['message' => 'Face login failed or expired. Please try again.'], 401);
         }
 
-        $user = User::whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
+        $user = User::find($userId);
 
         if (! $user) {
             return response()->json(['message' => 'No dashboard account matches this face.'], 401);
